@@ -47,7 +47,7 @@ public:
 class ExampleASTConsumer : public ASTConsumer {
 private:
 public:
-	explicit ExampleASTConsumer(CompilerInstance *CI) : visitor(new ExampleVisitor(CI)) {
+	explicit ExampleASTConsumer(CompilerInstance *CI) {
 		// プリプロセッサからのコールバック登録
 		Preprocessor &PP = CI->getPreprocessor();
 		PP.addPPCallbacks(llvm::make_unique<PPCallbacksTracker>(PP));
@@ -62,7 +62,7 @@ public:
 };
 
 static cl::OptionCategory MyToolCategory("My tool options");
-int main(int argc, char** argv)
+int main(int argc, const char** argv)
 {
 	CommonOptionsParser op(argc, argv, MyToolCategory);
 	ClangTool Tool(op.getCompilations(), op.getSourcePathList());
