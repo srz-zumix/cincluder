@@ -196,3 +196,6 @@ FakesAssemblies/
 *.opt
 
 *コピー*
+*.dot
+project/*.png
+project/*.bat

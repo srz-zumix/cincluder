@@ -1,3 +1,9 @@
+#pragma warning(push)
+#pragma warning(disable:4996)
+#pragma warning(disable:4244)
+#pragma warning(disable:4291)
+#pragma warning(disable:4146)
+
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
@@ -8,6 +14,8 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
+
+#pragma warning(pop)
 
 #include <functional>
 
@@ -40,8 +48,10 @@ private:
 	Map m_includes;
 	Depend m_depends;
 	hash::result_type m_root;
+	::std::string m_output;
 public:
 	cincluder(Preprocessor &pp) : PP(pp) {}
+	cincluder(Preprocessor &pp, const ::std::string& output) : PP(pp), m_output(output) {}
 
 	::std::string getFilePath(hash::result_type h)
 	{
@@ -95,6 +105,9 @@ public:
 
 	void dot()
 	{
+		if( m_output.empty() ) return;
+
+
 	}
 
 	void EndOfMainFile() override
@@ -125,23 +138,6 @@ public:
 			{
 				m_includes.insert(::std::make_pair(h, header(File->getName(), IsAngled)));
 			}
-			//else if( !IsAngled )
-			//{
-			//	auto it = m_depends.find(h);
-			//	if( it != m_depends.end() )
-			//	{
-			//		errs() << FileName << " is aleady include by \n";
-			//		errs() << "\t" << pFromFile->getName() << "\n";
-			//		for( auto f : it->second )
-			//		{
-			//			auto m = m_includes.find(f);
-			//			if( m != m_includes.end() )
-			//			{
-			//				errs() << "\t" << m->second.name << "\n";
-			//			}
-			//		}
-			//	}
-			//}
 
 			auto it = m_includes.find(p);
 			if( it == m_includes.end() )
@@ -191,6 +187,7 @@ public:
 		// プリプロセッサからのコールバック登録
 		Preprocessor &PP = CI->getPreprocessor();
 		PP.addPPCallbacks(llvm::make_unique<cincluder>(PP));
+		//AttachDependencyGraphGen(PP, "test.dot", "");
 	}
 };
 
@@ -201,7 +198,7 @@ public:
 	}
 };
 
-static cl::OptionCategory MyToolCategory("My tool options");
+static cl::OptionCategory MyToolCategory("cincluder");
 int main(int argc, const char** argv)
 {
 	CommonOptionsParser op(argc, argv, MyToolCategory);
