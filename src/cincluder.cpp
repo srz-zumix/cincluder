@@ -11,9 +11,11 @@
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/Support/raw_ostream.h"
 
 #pragma warning(pop)
 
@@ -106,8 +108,14 @@ public:
 	void dot()
 	{
 		if( m_output.empty() ) return;
-
-
+		std::error_code EC;
+		llvm::raw_fd_ostream OS(m_output, EC, llvm::sys::fs::F_Text);
+		if( EC ) 
+		{
+			PP.getDiagnostics().Report(diag::err_fe_error_opening) << m_output
+				<< EC.message();
+			return;
+		}
 	}
 
 	void EndOfMainFile() override
