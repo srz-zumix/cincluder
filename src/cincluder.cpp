@@ -16,6 +16,7 @@
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/GraphWriter.h"
 
 #pragma warning(pop)
 
@@ -70,6 +71,17 @@ public:
 
 		return path.substr( dpos );
 	}
+	::std::string getFileName(const header& h)
+	{
+		::std::string path = h.name;
+		size_t dpos1 = path.rfind('\\');
+		size_t dpos2 = path.rfind('/');
+		if( dpos1 == ::std::string::npos ) dpos1 = 0;
+		if( dpos2 == ::std::string::npos ) dpos2 = 0;
+		const size_t dpos = (::std::max)(dpos1, dpos2) + 1;
+
+		return path.substr(dpos);
+	}
 
 	void printRoot(hash::result_type h, int indent, bool expand)
 	{
@@ -116,6 +128,18 @@ public:
 				<< EC.message();
 			return;
 		}
+		const char* endl = "\n";
+
+		OS << "digraph \"dependencies\" {" << endl;
+
+		for( auto inc : m_includes )
+		{
+			OS << " [ shape=\"box\", label=\"";
+			OS << DOT::EscapeString(getFileName(inc.second));
+			OS << "\"];" << endl;
+		}
+
+		OS << "}" << endl;
 	}
 
 	void EndOfMainFile() override
