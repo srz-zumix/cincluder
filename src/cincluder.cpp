@@ -117,6 +117,11 @@ public:
 		}
 	}
 
+	void writeID(raw_ostream& OS, hash::result_type h)
+	{
+		OS << "header_" << h;
+	}
+
 	void dot()
 	{
 		if( m_output.empty() ) return;
@@ -134,6 +139,7 @@ public:
 
 		for( auto inc : m_includes )
 		{
+			writeID(OS, inc.first);
 			OS << " [ shape=\"box\", label=\"";
 			OS << DOT::EscapeString(getFileName(inc.second));
 			OS << "\"];" << endl;
