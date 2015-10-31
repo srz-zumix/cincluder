@@ -56,6 +56,11 @@ public:
 	cincluder(Preprocessor &pp) : PP(pp) {}
 	cincluder(Preprocessor &pp, const ::std::string& output) : PP(pp), m_output(output) {}
 
+	const header& getHeader(hash::result_type h)
+	{
+		return m_includes[h];
+	}
+	
 	::std::string getFilePath(hash::result_type h)
 	{
 		return m_includes[h].name;
@@ -143,6 +148,11 @@ public:
 			OS << " [ shape=\"box\", label=\"";
 			OS << DOT::EscapeString(getFileName(inc.second));
 			OS << "\"];" << endl;
+		}
+
+		for( auto depnd : m_depends )
+		{
+			writeID(getHeader(depnd.first));
 		}
 
 		OS << "}" << endl;
