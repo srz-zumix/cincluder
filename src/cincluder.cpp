@@ -150,9 +150,15 @@ public:
 			OS << "\"];" << endl;
 		}
 
-		for( auto depnd : m_depends )
+		for( auto h : m_depends )
 		{
-			writeID(getHeader(depnd.first));
+			for(auto depend : h.second)
+			{
+				writeID(OS, h.first);
+				OS << " -> ";
+				writeID(OS, depend);
+				OS << endl;
+			}
 		}
 
 		OS << "}" << endl;
@@ -161,6 +167,7 @@ public:
 	void EndOfMainFile() override
 	{
 		report();
+		dot();
 	}
 
     void InclusionDirective(SourceLocation HashLoc,
@@ -234,7 +241,7 @@ public:
 	explicit ExampleASTConsumer(CompilerInstance *CI) {
 		// プリプロセッサからのコールバック登録
 		Preprocessor &PP = CI->getPreprocessor();
-		PP.addPPCallbacks(llvm::make_unique<cincluder>(PP));
+		PP.addPPCallbacks(llvm::make_unique<cincluder>(PP, "test.dot"));
 		//AttachDependencyGraphGen(PP, "test.dot", "");
 	}
 };
