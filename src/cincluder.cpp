@@ -124,7 +124,8 @@ public:
 
 	void writeID(raw_ostream& OS, hash::result_type h)
 	{
-		OS << "header_" << h;
+		OS << "header_";
+		OS.write_hex(h);
 	}
 
 	void dot()
