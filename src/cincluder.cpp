@@ -254,10 +254,17 @@ public:
 	}
 };
 
-static cl::OptionCategory MyToolCategory("cincluder");
+namespace
+{
+
+static cl::OptionCategory CincluderCategory("cincluder");
+static cl::opt<::std::string> DotFile("dot", "output dot file", cl::cat(CincluderCategory));
+
+}
+
 int main(int argc, const char** argv)
 {
-	CommonOptionsParser op(argc, argv, MyToolCategory);
+	CommonOptionsParser op(argc, argv, CincluderCategory);
 	ClangTool Tool(op.getCompilations(), op.getSourcePathList());
 	return Tool.run(newFrontendActionFactory<ExampleFrontendAction>().get());
 }
