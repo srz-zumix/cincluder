@@ -236,13 +236,21 @@ public:
     }
 };
 
+namespace
+{
+
+static cl::OptionCategory CincluderCategory("cincluder");
+static cl::opt<::std::string> DotFile("dot", "output dot file", cl::cat(CincluderCategory));
+
+}
+
 class ExampleASTConsumer : public ASTConsumer {
 private:
 public:
 	explicit ExampleASTConsumer(CompilerInstance *CI) {
 		// プリプロセッサからのコールバック登録
 		Preprocessor &PP = CI->getPreprocessor();
-		PP.addPPCallbacks(llvm::make_unique<cincluder>(PP, "test.dot"));
+		PP.addPPCallbacks(llvm::make_unique<cincluder>(PP, DotFile));
 		//AttachDependencyGraphGen(PP, "test.dot", "");
 	}
 };
@@ -253,14 +261,6 @@ public:
 		return llvm::make_unique<ExampleASTConsumer>(&CI); // pass CI pointer to ASTConsumer
 	}
 };
-
-namespace
-{
-
-static cl::OptionCategory CincluderCategory("cincluder");
-static cl::opt<::std::string> DotFile("dot", "output dot file", cl::cat(CincluderCategory));
-
-}
 
 int main(int argc, const char** argv)
 {
