@@ -52,9 +52,11 @@ private:
 	Depend m_depends;
 	hash::result_type m_root;
 	::std::string m_output;
+	bool m_ignoreSystem;
 public:
 	cincluder(Preprocessor &pp) : PP(pp) {}
-	cincluder(Preprocessor &pp, const ::std::string& output) : PP(pp), m_output(output) {}
+	cincluder(Preprocessor &pp, const ::std::string& output, bool ignoreSystem)
+		: PP(pp), m_output(output), m_ignoreSystem(ignoreSystem) {}
 
 	const header& getHeader(hash::result_type h)
 	{
@@ -182,6 +184,7 @@ public:
                           const Module *Imported) override
 	{
 		if( File == nullptr ) return;
+		if( m_ignoreSystem && IsAngled ) return;
 
 		SourceManager& SM = PP.getSourceManager();
 		const FileEntry* pFromFile = SM.getFileEntryForID(SM.getFileID(SM.getExpansionLoc(HashLoc)));
@@ -206,7 +209,6 @@ public:
 				it->second.include.push_back(h);
 			}
 		}
-		if( !IsAngled )
 		{
 			auto it = m_depends.find(h);
 			if( it != m_depends.end() )
@@ -240,7 +242,8 @@ namespace
 {
 
 static cl::OptionCategory CincluderCategory("cincluder");
-static cl::opt<::std::string> DotFile("dot", "output dot file", cl::cat(CincluderCategory));
+static cl::opt<::std::string> DotFile("dot", cl::desc("output dot file"), cl::cat(CincluderCategory));
+static cl::opt<bool> IgnoreSystem("ignore-system", cl::desc("ignore system include file"), cl::cat(CincluderCategory));
 
 }
 
@@ -250,7 +253,7 @@ public:
 	explicit ExampleASTConsumer(CompilerInstance *CI) {
 		// プリプロセッサからのコールバック登録
 		Preprocessor &PP = CI->getPreprocessor();
-		PP.addPPCallbacks(llvm::make_unique<cincluder>(PP, DotFile));
+		PP.addPPCallbacks(llvm::make_unique<cincluder>(PP, DotFile, IgnoreSystem));
 		//AttachDependencyGraphGen(PP, "test.dot", "");
 	}
 };
