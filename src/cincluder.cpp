@@ -38,6 +38,8 @@ private:
 	typedef ::std::hash< ::std::string > hash;
 	typedef ::std::list< hash::result_type > hash_list;
 
+	typedef unsigned uid_t;
+
 	struct header
 	{
 		header() : angled(false) {}
@@ -46,28 +48,29 @@ private:
 		bool angled;
 		hash_list include;
 	};
-	typedef ::std::map< hash::result_type, header > Map;
-	typedef ::std::map< hash::result_type, hash_list > Depend;
+	typedef ::std::map< uid_t, header > Map;
+	typedef ::std::map< uid_t, hash_list > Depend;
 	Map m_includes;
 	Depend m_depends;
-	hash::result_type m_root;
+	uid_t m_root;
 	::std::string m_output;
+	bool m_reportRedundant;
 	bool m_ignoreSystem;
 public:
 	cincluder(Preprocessor &pp) : PP(pp) {}
-	cincluder(Preprocessor &pp, const ::std::string& output, bool ignoreSystem)
-		: PP(pp), m_output(output), m_ignoreSystem(ignoreSystem) {}
+	cincluder(Preprocessor &pp, const ::std::string& output, bool Redundant, bool ignoreSystem)
+		: PP(pp), m_output(output), m_reportRedundant(Redundant), m_ignoreSystem(ignoreSystem) {}
 
-	const header& getHeader(hash::result_type h)
+	const header& getHeader(uid_t h)
 	{
 		return m_includes[h];
 	}
 	
-	::std::string getFilePath(hash::result_type h)
+	::std::string getFilePath(uid_t h)
 	{
 		return m_includes[h].name;
 	}
-	::std::string getFileName(hash::result_type h)
+	::std::string getFileName(uid_t h)
 	{
 		::std::string path = getFilePath(h);
 		size_t dpos1 = path.rfind('\\');
@@ -90,7 +93,7 @@ public:
 		return path.substr(dpos);
 	}
 
-	void printRoot(hash::result_type h, int indent, bool expand)
+	void printRoot(uid_t h, int indent, bool expand)
 	{
 		if( indent > 2 ) return;
 		for( int i = 0; i < indent; ++i ) errs() << "  ";
@@ -124,10 +127,11 @@ public:
 		}
 	}
 
-	void writeID(raw_ostream& OS, hash::result_type h)
+	void writeID(raw_ostream& OS, uid_t h)
 	{
 		OS << "header_";
-		OS.write_hex(h);
+		OS << h;
+		//OS.write_hex(h);
 	}
 
 	void dot()
@@ -169,7 +173,10 @@ public:
 
 	void EndOfMainFile() override
 	{
-		report();
+		if( m_reportRedundant )
+		{
+			report();
+		}
 		dot();
 	}
 
@@ -190,8 +197,15 @@ public:
 		const FileEntry* pFromFile = SM.getFileEntryForID(SM.getFileID(SM.getExpansionLoc(HashLoc)));
 		if( pFromFile == nullptr ) return;
 
+#if 0
 		const auto h = hash()(File->getName());
 		const auto p = hash()(pFromFile->getName());
+		//errs() << File->getName() << "( " << File->getUID() << " )\n";
+#else
+		const auto h = File->getUID();
+		const auto p = pFromFile->getUID();
+#endif
+
 		{
 			if( m_includes.find(h) == m_includes.end() )
 			{
@@ -243,6 +257,7 @@ namespace
 
 static cl::OptionCategory CincluderCategory("cincluder");
 static cl::opt<::std::string> DotFile("dot", cl::desc("output dot file"), cl::cat(CincluderCategory));
+static cl::opt<bool> Redundant("report-redundant", cl::desc("report redundant include file"), cl::cat(CincluderCategory));
 static cl::opt<bool> IgnoreSystem("ignore-system", cl::desc("ignore system include file"), cl::cat(CincluderCategory));
 
 }
@@ -253,7 +268,7 @@ public:
 	explicit ExampleASTConsumer(CompilerInstance *CI) {
 		// プリプロセッサからのコールバック登録
 		Preprocessor &PP = CI->getPreprocessor();
-		PP.addPPCallbacks(llvm::make_unique<cincluder>(PP, DotFile, IgnoreSystem));
+		PP.addPPCallbacks(llvm::make_unique<cincluder>(PP, DotFile, Redundant, IgnoreSystem));
 		//AttachDependencyGraphGen(PP, "test.dot", "");
 	}
 };
