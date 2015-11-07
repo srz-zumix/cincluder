@@ -131,7 +131,6 @@ public:
 	{
 		OS << "header_";
 		OS << h;
-		//OS.write_hex(h);
 	}
 
 	void dot()
@@ -286,5 +285,3 @@ int main(int argc, const char** argv)
 	ClangTool Tool(op.getCompilations(), op.getSourcePathList());
 	return Tool.run(newFrontendActionFactory<ExampleFrontendAction>().get());
 }
-
-
