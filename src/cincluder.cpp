@@ -205,24 +205,27 @@ public:
 		const auto p = pFromFile->getUID();
 #endif
 
+		bool IsParentAngled = false;
 		{
-			if( m_includes.find(h) == m_includes.end() )
-			{
-				m_includes.insert(::std::make_pair(h, header(File->getName(), IsAngled)));
-			}
-
 			auto it = m_includes.find(p);
-			if( it == m_includes.end() )
+			if(it == m_includes.end())
 			{
 				m_root = p;
 				m_includes.insert(::std::make_pair(p, header(pFromFile->getName(), false)));
 			}
-			if( it != m_includes.end() )
+			if(it != m_includes.end())
 			{
 				it->second.include.push_back(h);
+				IsParentAngled = it->second.angled;
 			}
 		}
+		if( !IsParentAngled )
 		{
+			if(m_includes.find(h) == m_includes.end())
+			{
+				m_includes.insert(::std::make_pair(h, header(File->getName(), IsAngled)));
+			}
+
 			auto it = m_depends.find(h);
 			if( it != m_depends.end() )
 			{
