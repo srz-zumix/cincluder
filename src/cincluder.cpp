@@ -35,10 +35,8 @@ class cincluder : public PPCallbacks {
 private:
     Preprocessor &PP;
 
-	typedef ::std::hash< ::std::string > hash;
-	typedef ::std::list< hash::result_type > hash_list;
-
 	typedef unsigned uid_t;
+	typedef ::std::list< uid_t > uid_list;
 
 	struct header
 	{
@@ -46,12 +44,14 @@ private:
 		header(const ::std::string& n, bool angled_) : name(n), angled(angled_) {}
 		::std::string name;
 		bool angled;
-		hash_list include;
+		uid_list include;
 	};
 	typedef ::std::map< uid_t, header > Map;
-	typedef ::std::map< uid_t, hash_list > Depend;
+	typedef ::std::vector< uid_t > Angled;
+	typedef ::std::map< uid_t, uid_list > Depend;
 	Map m_includes;
 	Depend m_depends;
+	Angled m_angleds;
 	uid_t m_root;
 	::std::string m_output;
 	bool m_reportRedundant;
@@ -205,21 +205,34 @@ public:
 		const auto p = pFromFile->getUID();
 #endif
 
-		bool IsParentAngled = false;
 		{
 			auto it = m_includes.find(p);
 			if(it == m_includes.end())
 			{
-				m_root = p;
-				m_includes.insert(::std::make_pair(p, header(pFromFile->getName(), false)));
+				if(::std::find(m_angleds.begin(), m_angleds.end(), p) == m_angleds.end())
+				{
+					m_root = p;
+					m_includes.insert(::std::make_pair(p, header(pFromFile->getName(), false)));
+				}
+				else
+				{
+					m_angleds.push_back(h);
+					return;
+				}
 			}
 			if(it != m_includes.end())
 			{
-				it->second.include.push_back(h);
-				IsParentAngled = it->second.angled;
+				if(it->second.angled)
+				{
+					m_angleds.push_back(h);
+					return;
+				}
+				else
+				{
+					it->second.include.push_back(h);
+				}
 			}
 		}
-		if( !IsParentAngled )
 		{
 			if(m_includes.find(h) == m_includes.end())
 			{
@@ -233,7 +246,7 @@ public:
 			}
 			else
 			{
-				hash_list a;
+				uid_list a;
 				a.push_back(p);
 				m_depends.insert(::std::make_pair(h, a));
 			}
