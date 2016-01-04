@@ -146,6 +146,8 @@ public:
 		}
 		const char* endl = "\n";
 
+		const ::std::string color = ", color = \"#FF0000\"";
+
 		OS << "digraph \"dependencies\" {" << endl;
 
 		for( auto inc : m_includes )
@@ -153,7 +155,12 @@ public:
 			writeID(OS, inc.first);
 			OS << " [ shape=\"box\", label=\"";
 			OS << DOT::EscapeString(getFileName(inc.second));
-			OS << "\"];" << endl;
+			OS << "\"";
+			if( m_depends[inc.first].size() > 1 )
+			{
+				OS << color;
+			}
+			OS << "];" << endl;
 		}
 
 		for( auto h : m_depends )
@@ -271,7 +278,7 @@ namespace
 {
 
 static cl::OptionCategory CincluderCategory("cincluder");
-static cl::opt<::std::string> DotFile("dot", cl::desc("output dot file"), cl::cat(CincluderCategory));
+static cl::opt<::std::string> DotFile("dot", cl::init("cincluder.dot"), cl::desc("output dot file"), cl::cat(CincluderCategory));
 static cl::opt<bool> Redundant("report-redundant", cl::desc("report redundant include file"), cl::cat(CincluderCategory));
 static cl::opt<bool> IgnoreSystem("ignore-system", cl::desc("ignore system include file"), cl::cat(CincluderCategory));
 
